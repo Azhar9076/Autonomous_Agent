@@ -124,6 +124,62 @@ def delete_run(run_id):
     return redirect(url_for("index"))
 
 
+@app.after_request
+def add_cors_headers(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
+    response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
+    return response
+
+
+# ---- JSON API Endpoints (for decoupled Vercel Frontend) ----
+
+@app.route("/api/runs", methods=["GET"])
+def api_list_runs():
+    return json.dumps({"runs": list_runs()}), 200, {"Content-Type": "application/json"}
+
+
+@app.route("/api/run", methods=["POST", "OPTIONS"])
+def api_run():
+    if request.method == "OPTIONS":
+        return "", 204
+
+    data = request.get_json(silent=True) or request.form
+    topic = (data.get("topic") or "").strip()
+    if not topic:
+        return json.dumps({"error": "Topic is required"}), 400, {"Content-Type": "application/json"}
+
+    try:
+        result = run_pipeline(topic)
+        return json.dumps(result, ensure_ascii=False), 200, {"Content-Type": "application/json"}
+    except Exception as e:
+        return json.dumps({"error": str(e)}), 500, {"Content-Type": "application/json"}
+
+
+@app.route("/api/run/<run_id>", methods=["GET"])
+def api_view_run(run_id):
+    safe_run_id = os.path.basename(run_id)
+    article_path = f"{OUTPUT_DIR}/{safe_run_id}.md"
+    log_path = f"{OUTPUT_DIR}/{safe_run_id}-log.json"
+
+    if not os.path.exists(article_path) or not os.path.exists(log_path):
+        return json.dumps({"error": "Run not found"}), 404, {"Content-Type": "application/json"}
+
+    with open(article_path, encoding="utf-8") as f:
+        draft = f.read()
+    with open(log_path, encoding="utf-8") as f:
+        log_data = json.load(f)
+
+    return json.dumps({
+        "run_id": safe_run_id,
+        "topic": log_data.get("topic", safe_run_id),
+        "draft": draft,
+        "revision_count": log_data.get("revision_cycles", 0),
+        "research_notes": log_data.get("research_notes", ""),
+        "history": log_data.get("history", []),
+    }, ensure_ascii=False), 200, {"Content-Type": "application/json"}
+
+
 if __name__ == "__main__":
     port = int(os.getenv("FLASK_PORT", "5000"))
     app.run(host="0.0.0.0", port=port, debug=True)
