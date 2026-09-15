@@ -5,6 +5,10 @@ Reviews the Writer's draft against the research briefing and either
 approves it or sends specific, actionable revision notes back to the
 Writer. Responds in a small JSON envelope so the graph can make a
 reliable routing decision (approve vs. revise).
+
+Guard: if research_status is SEARCH_FAILED, or if the draft itself is the
+research-failure notice, the Editor immediately approves so the graph
+terminates cleanly without looping.
 """
 
 import json
@@ -22,6 +26,17 @@ Review the draft article against the research briefing for:
 - Clarity and flow
 - Structure (headline, dek, inverted pyramid)
 - Grammar and tone
+- Presence of at least one named source or URL in the article
+
+CRITICAL RULE: If the draft claims that information is unavailable, that the \
+writer could not find sources, or if it reads as a refusal rather than a \
+real article — mark it as NOT approved and provide feedback asking the Writer \
+to produce actual article content using the available research briefing.
+
+CRITICAL RULE: If the research briefing itself says "SEARCH_FAILED" or \
+"no sources retrieved", do NOT ask the Writer to try again — instead \
+approve immediately with the note that the pipeline must re-run with a \
+working search connection.
 
 Respond with ONLY a JSON object, no other text, no markdown fences:
 {
@@ -47,18 +62,53 @@ def _parse_editor_response(raw: str) -> dict:
 
 def editor_node(state: AgentState) -> dict:
     topic = state["topic"]
-    notes = state["research_notes"]
-    draft = state["draft"]
+    notes = state.get("research_notes", "")
+    draft = state.get("draft", "")
     revision_count = state.get("revision_count", 0)
     max_revisions = state.get("max_revisions", 3)
+    research_status = state.get("research_status", "RESEARCH_SUCCESS")
 
     print("[Editor] Reviewing draft ...")
+
+    # ── Guard: skip review if search failed (Writer already produced a notice) ─
+    if research_status == "SEARCH_FAILED":
+        print("[Editor] research_status=SEARCH_FAILED — auto-approving failure notice. ✓")
+        history_entry = {
+            "agent": "Editor",
+            "action": "auto-approved (SEARCH_FAILED — no article to review)",
+            "output": "Pipeline terminated due to search failure.",
+        }
+        return {
+            "approved": True,
+            "feedback": None,
+            "revision_count": revision_count,
+            "history": state.get("history", []) + [history_entry],
+        }
+
+    # ── Guard: if draft is the failure-notice template, auto-approve ──────────
+    if "Research Failed — Article Not Generated" in draft or "SEARCH_FAILED" in draft:
+        print("[Editor] Draft is a failure notice — auto-approving to terminate graph. ✓")
+        history_entry = {
+            "agent": "Editor",
+            "action": "auto-approved failure notice",
+            "output": "Research failure notice passed through without review.",
+        }
+        return {
+            "approved": True,
+            "feedback": None,
+            "revision_count": revision_count,
+            "history": state.get("history", []) + [history_entry],
+        }
 
     llm = get_llm(temperature=0.2)
     messages = [
         SystemMessage(content=SYSTEM_PROMPT),
         HumanMessage(
-            content=f"Topic: {topic}\n\nResearch briefing:\n{notes}\n\nDraft to review:\n{draft}"
+            content=(
+                f"Topic: {topic}\n\n"
+                f"Research briefing (research_status={research_status}):\n{notes}\n\n"
+                f"Draft to review:\n{draft}"
+            )
         ),
     ]
     response = llm.invoke(messages)
