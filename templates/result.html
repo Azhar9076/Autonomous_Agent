@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ topic }} | The Wire Desk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="site-container">
+
+    <header class="masthead desk-card">
+      <h1>The Wire Desk</h1>
+      <p class="subtitle">Autonomous reporting, drafting, and editorial review record.</p>
+    </header>
+
+    <main class="result-layout">
+
+      <div class="publication-strip desk-card">
+        <span class="status-badge">Approved</span>
+        <span>Published after {{ revision_count }} revision cycle{{ 's' if revision_count != 1 else '' }}</span>
+      </div>
+
+      <article class="article-card desk-card">
+        <div class="article-copy">{{ draft }}</div>
+      </article>
+
+      <section class="trace-card desk-card">
+        <h2 class="section-title">Newsroom trace</h2>
+        <div class="trace-list">
+          {% for entry in history %}
+            {% set cls = '' %}
+            {% if entry.agent == 'Editor' %}
+              {% set cls = 'is-approved' if entry.action == 'approved' else 'is-revision' %}
+            {% endif %}
+            <div class="trace-entry {{ cls }}">
+              <div class="trace-summary-row">
+                <span class="trace-agent-name">{{ loop.index }}. {{ entry.agent }}</span>
+                <span class="trace-action-text">{{ entry.action }}</span>
+              </div>
+              <details class="trace-details">
+                <summary>View output</summary>
+                <pre class="trace-output">{{ entry.output }}</pre>
+              </details>
+            </div>
+          {% endfor %}
+        </div>
+      </section>
+
+      <a class="back-link" href="{{ url_for('index') }}">&larr; Back to the desk</a>
+
+    </main>
+
+  </div>
+
+  <footer class="site-footer">
+    <div class="footer-card desk-card">
+      <div class="footer-bio">
+        <img
+          class="footer-avatar"
+          src="{{ url_for('static', filename='images/profile.jpg') }}"
+          alt="Azhar Patel"
+          width="44"
+          height="44"
+        >
+        <span class="footer-author">Built by Azhar Patel</span>
+      </div>
+      <nav class="footer-nav" aria-label="Social links">
+        <a class="footer-link" href="https://github.com/Azhar9076" target="_blank" rel="noopener">GitHub</a>
+        <a class="footer-link" href="https://www.linkedin.com/in/azhar-vajir-patel-b76215282" target="_blank" rel="noopener">LinkedIn</a>
+        <a class="footer-link" href="https://leetcode.com/u/Azahar094/" target="_blank" rel="noopener">LeetCode</a>
+        <a class="footer-link" href="mailto:ajarpatel42@gmail.com">Email</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

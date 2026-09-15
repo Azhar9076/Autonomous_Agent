@@ -1,0 +1,241 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Wire Desk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="site-container">
+
+    <header class="masthead desk-card">
+      <h1>The Wire Desk</h1>
+      <p class="subtitle">Assign a topic. Three autonomous agents report, draft, and edit the story until it is ready to publish.</p>
+    </header>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for m in messages %}
+          <div class="flash-message">{{ m }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <main class="desk-grid">
+
+      <!-- Dispatch Assignment Card -->
+      <section class="dispatch-card desk-card">
+        <h2 class="section-title">Dispatch an assignment</h2>
+        <form class="dispatch-form" method="post" action="{{ url_for('run') }}" id="dispatch-form">
+          <label class="form-label" for="topic">Topic or lead</label>
+          <div class="input-row">
+            <input class="topic-input" type="text" id="topic" name="topic" placeholder="e.g. Global semiconductor supply chains" autofocus required>
+            <button class="dispatch-button" type="submit" id="dispatch-btn">Dispatch</button>
+          </div>
+          <p class="dispatch-hint">The researcher gathers live reporting, the writer composes the draft, and the editor reviews it for accuracy and style.</p>
+          <div class="wire-status" id="wire-status">
+            <span class="status-dot"></span>
+            <span>Reporting, drafting, and editing in progress. Please hold…</span>
+          </div>
+        </form>
+      </section>
+
+      <!-- 3D Workflow Architecture Card -->
+      <section class="workflow-card desk-card" id="workflow-section">
+        <div class="workflow-header">
+          <div>
+            <h2 class="section-title">Autonomous 3-Agent Workflow</h2>
+            <p class="workflow-subtitle">Stateful LangGraph pipeline architecture with real-time editorial revision loop</p>
+          </div>
+          <span class="pipeline-badge">Live Pipeline</span>
+        </div>
+
+        <div class="architecture-stage-wrap" id="stage-wrap">
+          <div class="architecture-stage" id="architecture-stage">
+
+            <!-- Node 1: Researcher -->
+            <div class="agent-node node-researcher">
+              <div class="node-header">
+                <span class="node-step">01</span>
+                <span class="node-role">Researcher</span>
+              </div>
+              <div class="node-icon-wrap">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              </div>
+              <h3 class="node-title">Web Discovery</h3>
+              <p class="node-desc">Runs live DuckDuckGo queries, extracts facts and sources, and synthesizes an editorial brief.</p>
+              <span class="node-output-tag">Outputs: research_notes</span>
+            </div>
+
+            <!-- Connector 1 -->
+            <div class="stage-connector connector-1">
+              <div class="flow-line">
+                <span class="flow-dot"></span>
+              </div>
+              <span class="flow-label">Handoff</span>
+            </div>
+
+            <!-- Node 2: Writer -->
+            <div class="agent-node node-writer">
+              <div class="node-header">
+                <span class="node-step">02</span>
+                <span class="node-role">Writer</span>
+              </div>
+              <div class="node-icon-wrap">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+              </div>
+              <h3 class="node-title">Drafting &amp; Revisions</h3>
+              <p class="node-desc">Drafts inverted-pyramid news copy. Incrementally incorporates editor feedback.</p>
+              <span class="node-output-tag">Outputs: draft</span>
+            </div>
+
+            <!-- Connector 2 / Loop -->
+            <div class="stage-connector connector-2">
+              <div class="flow-line">
+                <span class="flow-dot"></span>
+              </div>
+              <div class="loop-badge">
+                <span class="loop-icon">↺</span>
+                <span>Feedback loop</span>
+              </div>
+            </div>
+
+            <!-- Node 3: Editor -->
+            <div class="agent-node node-editor">
+              <div class="node-header">
+                <span class="node-step">03</span>
+                <span class="node-role">Editor</span>
+              </div>
+              <div class="node-icon-wrap">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              </div>
+              <h3 class="node-title">Quality Gate</h3>
+              <p class="node-desc">Evaluates factual accuracy and tone. Either sends targeted revisions or grants final approval.</p>
+              <span class="node-output-tag">Outputs: approved / feedback</span>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="architecture-footer">
+          <div class="arch-stat">
+            <span class="stat-dot stat-accent"></span>
+            <span class="stat-text"><strong>LangGraph Engine</strong> Stateful cyclic graph execution</span>
+          </div>
+          <div class="arch-stat">
+            <span class="stat-dot stat-amber"></span>
+            <span class="stat-text"><strong>Revision Guardrail</strong> 3-cycle auto-approval cap</span>
+          </div>
+          <div class="arch-stat">
+            <span class="stat-dot"></span>
+            <span class="stat-text"><strong>Publication Artifacts</strong> UTF-8 Markdown &amp; JSON trace</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Past Editions Archive Card -->
+      <section class="archive-card desk-card">
+        <div class="archive-header">
+          <h2 class="section-title">Past editions{% if runs %} <span class="archive-count">({{ runs|length }})</span>{% endif %}</h2>
+        </div>
+        {% if runs %}
+          <ul class="run-list">
+            {% for r in runs %}
+              {% set is_raw_slug = (not r.topic) or (r.topic == r.run_id) or (r.topic|length > 15 and r.topic.endswith(r.run_id[-15:]) and '-' in r.topic) %}
+              {% set ts = r.run_id[-15:] %}
+              {% if ts|length == 15 and ts[8] == '-' %}
+                {% set y = ts[0:4] %}
+                {% set mo = ts[4:6] %}
+                {% set d = ts[6:8] %}
+                {% set h = ts[9:11] %}
+                {% set mi = ts[11:13] %}
+                {% set months = {'01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'May','06':'Jun','07':'Jul','08':'Aug','09':'Sep','10':'Oct','11':'Nov','12':'Dec'} %}
+                {% set date_str = months.get(mo, mo) ~ ' ' ~ (d|int) ~ ', ' ~ y ~ ' at ' ~ h ~ ':' ~ mi %}
+              {% else %}
+                {% set date_str = '' %}
+              {% endif %}
+              <li class="run-item">
+                <a class="run-link" href="{{ url_for('view_run', run_id=r.run_id) }}">
+                  <div class="run-meta-wrap">
+                    <span class="run-title">{% if is_raw_slug %}Untitled run{% else %}{{ r.topic }}{% endif %}</span>
+                    {% if date_str %}
+                      <span class="run-subtext">{{ date_str }}</span>
+                    {% endif %}
+                  </div>
+                </a>
+                <div class="run-actions">
+                  {% if r.revisions is not none %}
+                    <span class="revision-badge">{{ r.revisions }} revision{{ 's' if r.revisions != 1 else '' }}</span>
+                  {% endif %}
+                  <form class="delete-form" method="post" action="{{ url_for('delete_run', run_id=r.run_id) }}" onsubmit="return confirm('Delete this edition?');">
+                    <button class="delete-btn" type="submit" title="Delete edition" aria-label="Delete edition">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                      <span>Delete</span>
+                    </button>
+                  </form>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="empty-state">No editions filed yet. Dispatch your first assignment above.</p>
+        {% endif %}
+      </section>
+
+    </main>
+
+  </div>
+
+  <footer class="site-footer">
+    <div class="footer-card desk-card">
+      <div class="footer-bio">
+        <img
+          class="footer-avatar"
+          src="{{ url_for('static', filename='images/self.jpeg') }}"
+          alt="Azhar Patel"
+          width="44"
+          height="44"
+        >
+        <span class="footer-author">Built by Azhar Patel</span>
+      </div>
+      <nav class="footer-nav" aria-label="Social links">
+        <a class="footer-link" href="https://github.com/Azhar9076" target="_blank" rel="noopener">GitHub</a>
+        <a class="footer-link" href="https://www.linkedin.com/in/azhar-vajir-patel-b76215282" target="_blank" rel="noopener">LinkedIn</a>
+        <a class="footer-link" href="https://leetcode.com/u/Azahar094/" target="_blank" rel="noopener">LeetCode</a>
+        <a class="footer-link" href="mailto:ajarpatel42@gmail.com">Email</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('dispatch-form').addEventListener('submit', function () {
+      document.getElementById('dispatch-btn').disabled = true;
+      document.getElementById('dispatch-btn').textContent = 'Working…';
+      document.getElementById('wire-status').classList.add('active');
+    });
+
+    // Subtle 3D tilt tracking on desktop
+    (function () {
+      const stageWrap = document.getElementById('stage-wrap');
+      const stage = document.getElementById('architecture-stage');
+      if (stageWrap && stage && window.matchMedia('(min-width: 769px)').matches) {
+        stageWrap.addEventListener('mousemove', function (e) {
+          const rect = stageWrap.getBoundingClientRect();
+          const x = e.clientX - rect.left - rect.width / 2;
+          const y = e.clientY - rect.top - rect.height / 2;
+          const rotX = -(y / rect.height) * 8;
+          const rotY = (x / rect.width) * 8;
+          stage.style.transform = `rotateX(${rotX.toFixed(2)}deg) rotateY(${rotY.toFixed(2)}deg)`;
+        });
+        stageWrap.addEventListener('mouseleave', function () {
+          stage.style.transform = 'rotateX(0deg) rotateY(0deg)';
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
